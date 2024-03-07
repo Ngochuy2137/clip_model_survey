@@ -6,14 +6,17 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print(device)
 # Returns the model and the TorchVision transform needed by the model
 # It will download the model as necessary
-model, preprocess = clip.load("ViT-B/32",device=device,jit=False)
-
+model, preprocess = clip.load("ViT-L/14",device=device,jit=False)
+print("model type: ", type(model))
 # Preprocess step:
 #   Prepeocess image: resize, normalize, and sometimes crop images to fit the model's expected input
-image = preprocess(Image.open("6.png")).unsqueeze(0).to(device)
+image_file = Image.open("../testing_images/closed_door_1.png")
+image_file.show()
+image = preprocess(image_file).unsqueeze(0).to(device)
 #   Prepeocess text: Tokenization breaks text into smaller units (usually words or subwords) 
 #   and then converts them into vocabulary IDs
-text = clip.tokenize(["a cat", "a dog", "a girl"]).to(device)
+token_list = ["a closed door", "an opened door", "a girl", "a house", "a car"]
+text = clip.tokenize(token_list).to(device)
 
 with torch.no_grad():
     # Find feature of image -> a feature vector
@@ -26,4 +29,9 @@ with torch.no_grad():
     logits_per_image, logits_per_text = model(image, text)
     probs = logits_per_image.softmax(dim=-1).cpu().numpy()
 
-print("Label probs:", probs)
+print("Label probs:")
+prob_list = probs.tolist()[0]
+
+print(type(prob_list))
+for token, prob in zip(token_list, prob_list):
+    print(token, " : ",  prob)
